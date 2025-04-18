@@ -1,48 +1,52 @@
-import psycopg2
+import sqlite3
 import os
 
-def connect_db():
-    """Connects to PostgreSQL database using environment variables."""
-    return psycopg2.connect(
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        sslmode="require"
-    )
+# Database file path
+DB_PATH = os.path.join(os.path.dirname(__file__), "library.db")
 
-# Function to Add a Book
+def connect_db():
+    """Connect to (or create) SQLite database."""
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    return conn
+
+# Ensure table exists
+with connect_db() as conn:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS books (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            author TEXT,
+            genre TEXT,
+            year INTEGER,
+            read_status TEXT
+        )
+    """)
+    conn.commit()
+
 def add_book(name, author, genre, year, read_status):
     conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO books (name, author, genre, year, read_status) VALUES (%s, %s, %s, %s, %s)",
-                   (name, author, genre, year, read_status))
+    conn.execute(
+        "INSERT INTO books (name, author, genre, year, read_status) VALUES (?, ?, ?, ?, ?)",
+        (name, author, genre, year, read_status)
+    )
     conn.commit()
     conn.close()
 
-# Function to Delete a Book
 def delete_book(book_id):
     conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM books WHERE id = %s", (book_id,))
+    conn.execute("DELETE FROM books WHERE id = ?", (book_id,))
     conn.commit()
     conn.close()
 
-# Function to Update Read Status
 def update_book_status(book_id, new_status):
     conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE books SET read_status = %s WHERE id = %s", (new_status, book_id))
+    conn.execute("UPDATE books SET read_status = ? WHERE id = ?", (new_status, book_id))
     conn.commit()
     conn.close()
 
-# Function to Get All Books
 def get_books():
     conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM books")
+    cursor = conn.execute("SELECT * FROM books")
     books = cursor.fetchall()
     conn.close()
     return books
-

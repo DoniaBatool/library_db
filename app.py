@@ -3,7 +3,7 @@ import pandas as pd
 from database import add_book, delete_book, update_book_status, get_books
 
 # Streamlit Web UI
-st.title("📚 Library Management System (PostgreSQL)")
+st.title("📚 Library Management System")
 
 # Add a new book
 st.header("➕ Add a New Book")
